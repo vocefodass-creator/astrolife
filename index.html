@@ -393,6 +393,7 @@
                     "A ausência de evidência não é evidência de ausência." - Carl Sagan
                 </p>
                 <div class="flex gap-4">
+                    <a href="https://www.instagram.com/de.signergabriel?igsh=enhtNmVkOGh6bmJr" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-white transition-colors"><i class="fa-brands fa-instagram text-xl"></i></a>
                     <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fa-brands fa-twitter text-xl"></i></a>
                     <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fa-brands fa-github text-xl"></i></a>
                     <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fa-brands fa-youtube text-xl"></i></a>
@@ -409,26 +410,26 @@
         document.addEventListener('DOMContentLoaded', () => {
             
             /* =========================================
-           1. MENU MOBILE
-           ========================================= */
-        const btn = document.getElementById('mobile-menu-btn');
-        const menu = document.getElementById('mobile-menu');
-        const mobileLinks = document.querySelectorAll('.mobile-link');
+               1. MENU MOBILE
+               ========================================= */
+            const btn = document.getElementById('mobile-menu-btn');
+            const menu = document.getElementById('mobile-menu');
+            const mobileLinks = document.querySelectorAll('.mobile-link');
 
-        btn.addEventListener('click', () => {
-            menu.classList.toggle('hidden');
-        });
-
-        // Fecha o menu mobile ao clicar num link
-        mobileLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                menu.classList.add('hidden');
+            btn.addEventListener('click', () => {
+                menu.classList.toggle('hidden');
             });
-        });
 
-        /* =========================================
-           2. EFEITO NAVBAR NO SCROLL
-           ========================================= */
+            // Fecha o menu mobile ao clicar num link
+            mobileLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    menu.classList.add('hidden');
+                });
+            });
+
+            /* =========================================
+               2. EFEITO NAVBAR NO SCROLL
+               ========================================= */
             const navbar = document.getElementById('navbar');
             window.addEventListener('scroll', () => {
                 if (window.scrollY > 50) {
@@ -487,7 +488,8 @@
                     let sx = (this.x / this.z) * width + width / 2;
                     let sy = (this.y / this.z) * height + height / 2;
 
-                    let r = (width - this.z) / width * 2; // Tamanho baseado na profundidade
+                    // Calcula o raio baseado na profundidade e impede que seja um valor negativo usando Math.max()
+                    let r = Math.max(0, (width - this.z) / width * 2); 
                     
                     ctx.beginPath();
                     ctx.arc(sx, sy, r, 0, Math.PI * 2);
@@ -535,23 +537,23 @@
 
             draw();
 
-        // Acelera as estrelas quando o usuário passa o mouse por cima do hero
-        const heroSection = document.getElementById('inicio');
-        heroSection.addEventListener('mouseenter', () => speed = 5);
-        heroSection.addEventListener('mouseleave', () => speed = 0.5);
+            // Acelera as estrelas quando o usuário passa o mouse por cima do hero
+            const heroSection = document.getElementById('inicio');
+            heroSection.addEventListener('mouseenter', () => speed = 5);
+            heroSection.addEventListener('mouseleave', () => speed = 0.5);
 
-        // Adiciona suporte para ecrãs táteis (smartphones/tablets)
-        heroSection.addEventListener('touchstart', (e) => {
-            speed = 5;
-        }, {passive: true});
-        
-        heroSection.addEventListener('touchend', () => {
-            speed = 0.5;
-        });
+            // Adiciona suporte para ecrãs táteis (smartphones/tablets)
+            heroSection.addEventListener('touchstart', (e) => {
+                speed = 5;
+            }, {passive: true});
+            
+            heroSection.addEventListener('touchend', () => {
+                speed = 0.5;
+            });
 
-        /* =========================================
-           4. LÓGICA DO SIMULADOR SETI
-           ========================================= */
+            /* =========================================
+               4. LÓGICA DO SIMULADOR SETI
+               ========================================= */
             const btnScan = document.getElementById('btn-scan');
             const terminalOutput = document.getElementById('terminal-output');
             const setiContainer = document.getElementById('seti-container');
