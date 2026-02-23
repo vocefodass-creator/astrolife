@@ -1,326 +1,870 @@
 <!DOCTYPE html>
-<html lang="pt-PT">
+<html lang="pt-BR" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AstroLife Mobile</title>
+    <title>Descoberta Cósmica | A Busca por Vida</title>
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome para ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        orbitron: ['Orbitron', 'sans-serif'],
+                        sans: ['Roboto', 'sans-serif'],
+                    },
+                    colors: {
+                        space: {
+                            900: '#030712', // Mais escuro para contraste OLED
+                            800: '#0A1526',
+                            700: '#112240',
+                        },
+                        neon: {
+                            blue: '#00f3ff',
+                            purple: '#bc13fe',
+                            green: '#00ff66',
+                            orange: '#ff6b00'
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        glow: {
+                            'from': { boxShadow: '0 0 10px -5px rgba(0, 243, 255, 0.5)' },
+                            'to': { boxShadow: '0 0 20px 5px rgba(0, 243, 255, 0.6)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        :root {
-            --bg-dark: #050810;
-            --accent: #00f3ff;
-            --card: #111827;
-        }
+        /* Estilos Base e Scrollbar Customizada */
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-dark);
-            color: white;
-            margin: 0;
-            padding: 0;
+            background-color: #030712;
+            color: #e2e8f0;
             overflow-x: hidden;
-            -webkit-tap-highlight-color: transparent;
+            -webkit-font-smoothing: antialiased;
         }
-        .font-orbitron { font-family: 'Orbitron', sans-serif; }
         
-        /* Navegação Inferior */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #050B14; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #112240; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00f3ff; 
+        }
+
+        /* Utilidades UI */
+        .glass-nav {
+            background: rgba(3, 7, 18, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(0, 243, 255, 0.1);
+        }
+
+        .card-hover {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .card-hover:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px -10px rgba(0, 243, 255, 0.2);
+            border-color: rgba(0, 243, 255, 0.4);
+        }
+
+        .text-glow {
+            text-shadow: 0 0 15px rgba(0, 243, 255, 0.4), 0 0 30px rgba(0, 243, 255, 0.2);
+        }
+
+        /* Canvas background */
+        #starfield {
+            position: absolute;
+            top: 0;
             left: 0;
-            right: 0;
-            height: 70px;
-            background: rgba(17, 24, 39, 0.95);
-            backdrop-filter: blur(10px);
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            z-index: 100;
-            padding-bottom: env(safe-area-inset-bottom);
-        }
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: #94a3b8;
-            font-size: 10px;
-            transition: 0.3s;
-        }
-        .nav-item.active {
-            color: var(--accent);
-        }
-        .nav-item i {
-            font-size: 20px;
-            margin-bottom: 4px;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
         }
 
-        /* Vistas */
-        .view {
-            display: none;
-            padding: 20px;
-            padding-bottom: 100px;
-            min-height: 100vh;
-        }
-        .view.active {
-            display: block;
-            animation: fadeIn 0.4s ease-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .content-layer {
+            position: relative;
+            z-index: 10;
         }
 
-        /* Scanner */
-        .scanner-log {
-            height: 250px;
-            background: #000;
-            border-radius: 12px;
-            padding: 15px;
-            font-family: monospace;
-            font-size: 12px;
-            color: #00ff66;
-            overflow-y: auto;
-            border: 1px solid #1f2937;
+        /* Efeito SETI */
+        .scan-line {
+            width: 100%;
+            height: 2px;
+            background-color: #00ff66;
+            box-shadow: 0 0 10px #00ff66, 0 0 20px #00ff66;
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            z-index: 20;
         }
-        .scan-btn {
-            background: linear-gradient(45deg, #00f3ff, #bc13fe);
-            border-radius: 12px;
-            padding: 15px;
-            text-align: center;
-            font-weight: bold;
-            box-shadow: 0 4px 15px rgba(0, 243, 255, 0.3);
+
+        .scanning .scan-line {
+            animation: scanAnim 2s linear infinite;
+            opacity: 1;
         }
-        
-        /* Planetas */
-        .planet-card {
-            background: var(--card);
-            border-radius: 16px;
-            padding: 15px;
-            margin-bottom: 15px;
-            border: 1px solid rgba(255,255,255,0.05);
+
+        @keyframes scanAnim {
+            0% { top: 0; }
+            50% { top: 100%; }
+            100% { top: 0; }
+        }
+
+        /* Modal Transitions */
+        .modal-active {
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+        .modal-content-active {
+            transform: scale(1) !important;
         }
     </style>
 </head>
-<body>
+<body class="selection:bg-neon-blue selection:text-space-900">
 
-    <!-- Ecrã de Splash Simulado -->
-    <div id="splash" class="fixed inset-0 z-[200] bg-[#050810] flex flex-col items-center justify-center transition-opacity duration-700">
-        <div class="text-4xl text-cyan-400 mb-4 animate-pulse">
-            <i class="fa-solid fa-satellite-dish"></i>
-        </div>
-        <h1 class="font-orbitron text-2xl font-bold tracking-widest uppercase">AstroLife</h1>
-        <p class="text-xs text-slate-500 mt-2">A carregar o cosmos...</p>
-    </div>
-
-    <!-- VISTA INICIAL (HOME) -->
-    <div id="home" class="view active">
-        <div class="mt-8 mb-10 text-center">
-            <h1 class="font-orbitron text-3xl font-black mb-2">ASTRO<span class="text-cyan-400">LIFE</span></h1>
-            <p class="text-slate-400 text-sm">Explora a fronteira final no teu bolso.</p>
-        </div>
-
-        <div class="grid grid-cols-1 gap-4">
-            <!-- Card de Notícia com Clique para "Ler Mais" -->
-            <div onclick="showView('news')" class="bg-gradient-to-r from-blue-900/40 to-cyan-900/40 p-6 rounded-2xl border border-cyan-500/20 active:scale-95 transition-transform cursor-pointer">
-                <h2 class="font-orbitron text-lg font-bold mb-2 text-white">Última Notícia</h2>
-                <p class="text-sm text-slate-300">Telescópio James Webb deteta sinais de metano em exoplaneta habitável.</p>
-                <div class="mt-4 text-xs text-cyan-400 font-bold uppercase flex items-center gap-2">
-                    Ler Mais <i class="fa-solid fa-arrow-right"></i>
+    <!-- Navegação -->
+    <nav class="fixed w-full z-50 glass-nav transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <div class="flex-shrink-0 flex items-center gap-3 cursor-pointer" onclick="window.scrollTo(0,0)">
+                    <i class="fa-solid fa-satellite-dish text-neon-blue text-2xl animate-pulse"></i>
+                    <span class="font-orbitron font-bold text-xl tracking-wider text-white">ASTRO<span class="text-neon-blue">LIFE</span></span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-6 lg:space-x-8">
+                        <a href="#inicio" class="text-gray-300 hover:text-neon-blue px-3 py-2 rounded-md text-sm font-medium transition-colors">Início</a>
+                        <a href="#evidencias" class="text-gray-300 hover:text-neon-blue px-3 py-2 rounded-md text-sm font-medium transition-colors">Evidências</a>
+                        <a href="#misterios" class="text-gray-300 hover:text-neon-purple px-3 py-2 rounded-md text-sm font-medium transition-colors">Mistérios</a>
+                        <a href="#destinos" class="text-gray-300 hover:text-neon-blue px-3 py-2 rounded-md text-sm font-medium transition-colors">Destinos</a>
+                        <a href="#interativo" class="border border-neon-blue text-neon-blue hover:bg-neon-blue hover:text-space-900 px-4 py-2 rounded-md text-sm font-medium transition-all shadow-[0_0_10px_rgba(0,243,255,0.2)]">Scanner SETI</a>
+                    </div>
+                </div>
+                <!-- Mobile menu button -->
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-btn" class="text-gray-300 hover:text-white focus:outline-none p-2">
+                        <i class="fa-solid fa-bars text-2xl"></i>
+                    </button>
                 </div>
             </div>
-
-            <div class="planet-card flex items-center gap-4 active:scale-95 transition-transform cursor-pointer" onclick="showView('planets')">
-                <div class="w-12 h-12 bg-red-900/20 rounded-full flex items-center justify-center text-red-500">
-                    <i class="fa-solid fa-earth-americas"></i>
-                </div>
-                <div>
-                    <h3 class="font-bold">Mundos Habitáveis</h3>
-                    <p class="text-xs text-slate-400">Marte, Europa e Encélado.</p>
-                </div>
-                <i class="fa-solid fa-chevron-right ml-auto text-slate-600"></i>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-space-800 border-b border-gray-700 shadow-xl absolute w-full">
+            <div class="px-4 pt-2 pb-6 space-y-2 sm:px-3 flex flex-col">
+                <a href="#inicio" class="mobile-link block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-space-700 hover:text-neon-blue transition-colors">Início</a>
+                <a href="#evidencias" class="mobile-link block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-space-700 hover:text-neon-blue transition-colors">Evidências</a>
+                <a href="#misterios" class="mobile-link block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-space-700 hover:text-neon-purple transition-colors">Mistérios Cósmicos</a>
+                <a href="#destinos" class="mobile-link block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-space-700 hover:text-neon-blue transition-colors">Destinos</a>
+                <a href="#interativo" class="mobile-link mt-4 block px-3 py-3 rounded-md text-base font-bold text-space-900 bg-neon-blue text-center">Scanner SETI</a>
             </div>
-        </div>
-    </div>
-
-    <!-- VISTA DE NOTÍCIA DETALHADA -->
-    <div id="news" class="view">
-        <div class="flex items-center gap-4 mb-6 pt-4">
-            <button onclick="showView('home')" class="text-cyan-400 text-xl"><i class="fa-solid fa-arrow-left"></i></button>
-            <h2 class="font-orbitron text-xl font-bold">Notícia Detalhada</h2>
-        </div>
-
-        <div class="rounded-2xl overflow-hidden mb-6">
-            <div class="h-48 bg-slate-800 flex items-center justify-center text-5xl text-slate-700">
-                <i class="fa-solid fa-satellite"></i>
-            </div>
-        </div>
-
-        <h1 class="text-2xl font-bold mb-4 leading-tight">Descoberta Histórica: Metano Detetado no K2-18b</h1>
-        
-        <div class="flex items-center gap-2 mb-6 text-xs text-slate-400 uppercase tracking-widest">
-            <span class="text-cyan-400 font-bold">Fonte: NASA / ESA</span>
-            <span>•</span>
-            <span>23 Fev 2026</span>
-        </div>
-
-        <div class="space-y-4 text-slate-300 leading-relaxed text-sm">
-            <p>O Telescópio Espacial James Webb (JWST) identificou moléculas contendo carbono, incluindo metano e dióxido de carbono, na atmosfera do exoplaneta K2-18b.</p>
-            <p>Este mundo, que tem 8,6 vezes a massa da Terra, orbita a estrela anã fria K2-18 na zona habitável e situa-se a 120 anos-luz do nosso sistema solar.</p>
-            <p>A abundância de metano e dióxido de carbono, e a escassez de amoníaco, apoiam a hipótese de que pode haver um oceano de água líquida sob uma atmosfera rica em hidrogénio em K2-18b.</p>
-            <p>Estas observações iniciais do Webb também forneceram uma possível deteção de uma molécula chamada sulfureto de dimetilo (DMS). Na Terra, esta molécula é apenas produzida pela vida - especificamente, pelo fitoplâncton em ambientes marinhos.</p>
-        </div>
-
-        <button onclick="showView('home')" class="mt-8 w-full bg-slate-800 py-3 rounded-xl font-bold text-sm">Voltar ao Início</button>
-    </div>
-
-    <!-- VISTA DE PLANETAS -->
-    <div id="planets" class="view">
-        <h2 class="font-orbitron text-xl font-bold mb-6 pt-4"><i class="fa-solid fa-globe mr-2 text-cyan-400"></i> Mundos Candidatos</h2>
-        
-        <div class="planet-card">
-            <div class="flex justify-between items-start mb-2">
-                <h3 class="font-bold text-lg">Marte</h3>
-                <span class="text-[10px] bg-red-500/20 text-red-400 px-2 py-1 rounded">Vizinhança</span>
-            </div>
-            <p class="text-sm text-slate-400">Procura de fósseis microbianos em antigos leitos de rios secos pelo Rover Perseverance.</p>
-        </div>
-
-        <div class="planet-card">
-            <div class="flex justify-between items-start mb-2">
-                <h3 class="font-bold text-lg">Europa</h3>
-                <span class="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-1 rounded">Lua de Júpiter</span>
-            </div>
-            <p class="text-sm text-slate-400">Um oceano global de água salgada debaixo de 10km de gelo. Possíveis fontes hidrotermais.</p>
-        </div>
-
-        <div class="planet-card">
-            <div class="flex justify-between items-start mb-2">
-                <h3 class="font-bold text-lg">Exoplaneta K2-18b</h3>
-                <span class="text-[10px] bg-purple-500/20 text-purple-400 px-2 py-1 rounded">Fora do Sistema Solar</span>
-            </div>
-            <p class="text-sm text-slate-400">Detetadas bioassinaturas na atmosfera por espectroscopia. Mundos oceanos em zonas habitáveis.</p>
-        </div>
-    </div>
-
-    <!-- VISTA DE SCANNER -->
-    <div id="scanner" class="view">
-        <h2 class="font-orbitron text-xl font-bold mb-6 pt-4"><i class="fa-solid fa-satellite-dish mr-2 text-cyan-400"></i> Scanner SETI</h2>
-        
-        <div class="scanner-log mb-6" id="log">
-            > Sistema de Escuta Profunda ativo...<br>
-            > À espera de sinal de rádio...<br>
-            > Alinhamento: Alpha Centauri.
-        </div>
-
-        <button onclick="startScan()" id="scan-btn" class="scan-btn w-full text-black uppercase tracking-widest text-sm">
-            Iniciar Varredura
-        </button>
-
-        <div class="mt-8 p-4 bg-slate-900/50 rounded-xl border border-slate-800">
-            <h4 class="text-xs font-bold text-slate-500 uppercase mb-2">Explicação Técnica</h4>
-            <p class="text-xs text-slate-400 leading-relaxed">
-                Este simulador procura por sinais de banda estreita na linha de 21cm do Hidrogénio (1420 MHz), a frequência mais provável para comunicação alienígena.
-            </p>
-        </div>
-    </div>
-
-    <!-- Navegação Inferior -->
-    <nav class="bottom-nav">
-        <div class="nav-item active" id="nav-home" onclick="showView('home')">
-            <i class="fa-solid fa-house"></i>
-            <span>Início</span>
-        </div>
-        <div class="nav-item" id="nav-planets" onclick="showView('planets')">
-            <i class="fa-solid fa-earth-mars"></i>
-            <span>Mundos</span>
-        </div>
-        <div class="nav-item" id="nav-scanner" onclick="showView('scanner')">
-            <i class="fa-solid fa-radar"></i>
-            <span>Scanner</span>
         </div>
     </nav>
 
+    <!-- Hero Section com Canvas -->
+    <section id="inicio" class="relative min-h-[100svh] flex items-center justify-center overflow-hidden pt-20 pb-10">
+        <!-- Canvas para as estrelas -->
+        <canvas id="starfield"></canvas>
+        
+        <!-- Gradiente de sobreposição -->
+        <div class="absolute inset-0 bg-gradient-to-b from-transparent via-space-900/60 to-space-900 z-0"></div>
+
+        <div class="relative z-10 text-center px-4 sm:px-6 max-w-5xl mx-auto content-layer mt-10 md:mt-0">
+            <h1 class="font-orbitron text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-6 tracking-tight leading-tight">
+                NÃO ESTAMOS <span class="block sm:inline text-transparent bg-clip-text bg-gradient-to-r from-neon-blue to-neon-purple text-glow">SOZINHOS</span>
+            </h1>
+            <p class="text-lg sm:text-xl md:text-2xl text-gray-300 mb-10 font-light max-w-3xl mx-auto leading-relaxed px-2">
+                A humanidade está à beira de responder à pergunta mais profunda de todas. Explore as últimas descobertas astrobiológicas e a ciência por trás da busca por vida alienígena.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center px-4">
+                <a href="#destinos" class="w-full sm:w-auto bg-neon-blue text-space-900 font-bold px-8 py-4 rounded-full hover:bg-white hover:shadow-[0_0_20px_rgba(0,243,255,0.6)] transition-all duration-300 transform hover:-translate-y-1 text-center">
+                    Ver Destinos
+                </a>
+                <a href="#interativo" class="w-full sm:w-auto border border-gray-500 text-white font-bold px-8 py-4 rounded-full hover:border-neon-purple hover:text-neon-purple transition-all duration-300 text-center bg-space-900/50 backdrop-blur-sm">
+                    Simulador SETI
+                </a>
+            </div>
+        </div>
+
+        <!-- Scroll indicator -->
+        <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce z-10 text-gray-500">
+            <i class="fa-solid fa-chevron-down text-xl sm:text-2xl"></i>
+        </div>
+    </section>
+
+    <!-- Seção O Que Sabemos -->
+    <section id="evidencias" class="py-16 md:py-24 bg-space-900 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center mb-12 md:mb-16">
+                <h2 class="font-orbitron text-3xl sm:text-4xl md:text-5xl font-bold mb-4">A Nova Fronteira da <span class="text-neon-purple">Astrobiologia</span></h2>
+                <div class="w-20 md:w-24 h-1 bg-gradient-to-r from-neon-blue to-neon-purple mx-auto rounded-full"></div>
+                <p class="mt-6 text-gray-400 max-w-2xl mx-auto text-base sm:text-lg px-2">
+                    A busca moderna foca em bioassinaturas, extremófilos e oceanos subterrâneos, abandonando a ficção para focar em ciência pura.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                <!-- Card 1 -->
+                <div class="bg-space-800 p-6 md:p-8 rounded-2xl border border-gray-800/80 card-hover flex flex-col">
+                    <div class="w-12 h-12 md:w-14 md:h-14 bg-blue-900/30 rounded-lg flex items-center justify-center mb-6 border border-blue-500/30">
+                        <i class="fa-solid fa-droplet text-neon-blue text-xl md:text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 font-orbitron text-white">A Regra da Água</h3>
+                    <p class="text-gray-400 text-sm md:text-base leading-relaxed flex-grow">
+                        Na Terra, onde há água líquida, há vida. O foco atual das agências espaciais é "seguir a água". Luas congeladas com oceanos internos são os principais alvos hoje.
+                    </p>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="bg-space-800 p-6 md:p-8 rounded-2xl border border-gray-800/80 card-hover flex flex-col">
+                    <div class="w-12 h-12 md:w-14 md:h-14 bg-purple-900/30 rounded-lg flex items-center justify-center mb-6 border border-purple-500/30">
+                        <i class="fa-solid fa-bug text-neon-purple text-xl md:text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 font-orbitron text-white">Extremófilos</h3>
+                    <p class="text-gray-400 text-sm md:text-base leading-relaxed flex-grow">
+                        Descobrimos bactérias terrestres vivendo em reatores nucleares, vulcões submarinos e no gelo da Antártica. A vida adapta-se a condições antes consideradas impossíveis.
+                    </p>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="bg-space-800 p-6 md:p-8 rounded-2xl border border-gray-800/80 card-hover flex flex-col lg:col-span-1 md:col-span-2">
+                    <div class="w-12 h-12 md:w-14 md:h-14 bg-green-900/30 rounded-lg flex items-center justify-center mb-6 border border-green-500/30">
+                        <i class="fa-solid fa-fingerprint text-neon-green text-xl md:text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 font-orbitron text-white">Bioassinaturas</h3>
+                    <p class="text-gray-400 text-sm md:text-base leading-relaxed flex-grow">
+                        Telescópios como o James Webb analisam a luz de exoplanetas distantes buscando gases na atmosfera (como metano e oxigênio juntos) que indicariam processos biológicos contínuos.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Nova Seção: Mistérios Cósmicos -->
+    <section id="misterios" class="py-16 md:py-24 bg-space-800 border-t border-gray-800 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col lg:flex-row items-center gap-12">
+                <div class="w-full lg:w-1/2 space-y-6 text-center lg:text-left">
+                    <h2 class="font-orbitron text-3xl sm:text-4xl md:text-5xl font-bold leading-tight">
+                        Onde está <span class="text-neon-purple text-glow">todo mundo?</span>
+                    </h2>
+                    <p class="text-gray-300 text-base sm:text-lg leading-relaxed">
+                        A Via Láctea abriga bilhões de estrelas semelhantes ao Sol, muitas com planetas do tamanho da Terra. Mesmo com a tecnologia de viagem lenta, a galáxia inteira poderia ser colonizada em poucos milhões de anos. Então, por que o universo parece tão silencioso?
+                    </p>
+                    
+                    <div class="flex flex-col sm:flex-row gap-4 pt-4 justify-center lg:justify-start">
+                        <button onclick="openModal('fermi')" class="bg-space-700 hover:bg-space-900 border border-neon-purple text-white px-6 py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-300">
+                            <i class="fa-solid fa-book-journal-whills text-neon-purple"></i> O Paradoxo de Fermi
+                        </button>
+                        <button onclick="openModal('drake')" class="bg-space-700 hover:bg-space-900 border border-neon-blue text-white px-6 py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-300">
+                            <i class="fa-solid fa-calculator text-neon-blue"></i> A Equação de Drake
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="w-full lg:w-1/2 relative">
+                    <div class="aspect-square max-w-md mx-auto relative flex items-center justify-center">
+                        <!-- Animação CSS para representar sinais/silêncio -->
+                        <div class="absolute inset-0 bg-neon-purple/5 rounded-full animate-pulse-slow scale-110"></div>
+                        <div class="absolute inset-4 bg-neon-blue/10 rounded-full animate-pulse-slow scale-105" style="animation-delay: 1s;"></div>
+                        <div class="absolute inset-10 border border-dashed border-gray-600 rounded-full animate-[spin_30s_linear_infinite]"></div>
+                        <div class="relative z-10 text-8xl md:text-9xl opacity-80 animate-float">👽<span class="absolute -bottom-4 -right-4 text-4xl">❓</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Seção Destinos Promissores -->
+    <section id="destinos" class="py-16 md:py-24 bg-space-900 border-t border-b border-gray-800 relative overflow-hidden">
+        <div class="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 rounded-full bg-neon-purple opacity-5 blur-[100px]"></div>
+        <div class="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 rounded-full bg-neon-blue opacity-5 blur-[100px]"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="flex flex-col md:flex-row justify-between items-end mb-12">
+                <div class="max-w-2xl text-center md:text-left mx-auto md:mx-0">
+                    <h2 class="font-orbitron text-3xl sm:text-4xl md:text-5xl font-bold mb-4">Mundos <span class="text-neon-blue">Candidatos</span></h2>
+                    <p class="text-gray-400 text-base sm:text-lg">Os locais com maior probabilidade de abrigar vida microbiana em nosso sistema solar e além.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
+                <!-- Marte -->
+                <div class="group relative rounded-2xl overflow-hidden bg-space-800 border border-gray-700 flex flex-col md:flex-row shadow-lg">
+                    <div class="w-full md:w-2/5 h-48 md:h-auto bg-gray-900 relative overflow-hidden flex-shrink-0">
+                        <div class="absolute inset-0 bg-gradient-to-br from-red-900/80 to-orange-900/90 group-hover:scale-110 transition-transform duration-700"></div>
+                        <div class="absolute inset-0 flex items-center justify-center text-7xl transform group-hover:rotate-6 transition-transform duration-500">🪐</div>
+                    </div>
+                    <div class="p-6 md:p-8 md:w-3/5 flex flex-col h-full">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="px-2 py-1 bg-red-900/40 text-red-400 text-[10px] md:text-xs font-bold rounded uppercase tracking-wider">Planeta Vizinho</span>
+                        </div>
+                        <h3 class="text-2xl font-bold font-orbitron mb-2">Marte</h3>
+                        <p class="text-gray-400 text-sm mb-6 flex-grow">
+                            Outrora um mundo quente e úmido. Hoje, rovers buscam fósseis no leito seco de antigos lagos.
+                        </p>
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-auto">
+                            <span class="text-neon-orange text-xs font-bold flex items-center gap-2">
+                                <i class="fa-solid fa-radar text-neon-orange"></i> Exploração Ativa
+                            </span>
+                            <button onclick="openModal('marte')" class="text-sm font-bold text-white hover:text-neon-blue bg-space-700 hover:bg-space-900 px-4 py-2 rounded transition-colors w-full sm:w-auto text-center border border-gray-600">
+                                Ler mais <i class="fa-solid fa-arrow-right ml-1 text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Europa -->
+                <div class="group relative rounded-2xl overflow-hidden bg-space-800 border border-gray-700 flex flex-col md:flex-row shadow-lg">
+                    <div class="w-full md:w-2/5 h-48 md:h-auto bg-gray-900 relative overflow-hidden flex-shrink-0">
+                        <div class="absolute inset-0 bg-gradient-to-br from-blue-400/70 to-blue-900/90 group-hover:scale-110 transition-transform duration-700"></div>
+                        <div class="absolute inset-0 flex items-center justify-center text-7xl text-white shadow-xl transform group-hover:-rotate-6 transition-transform duration-500">🌕</div>
+                    </div>
+                    <div class="p-6 md:p-8 md:w-3/5 flex flex-col h-full">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="px-2 py-1 bg-blue-900/40 text-blue-400 text-[10px] md:text-xs font-bold rounded uppercase tracking-wider">Lua de Júpiter</span>
+                        </div>
+                        <h3 class="text-2xl font-bold font-orbitron mb-2">Europa</h3>
+                        <p class="text-gray-400 text-sm mb-6 flex-grow">
+                            Sob uma crosta de gelo, esconde-se um oceano global de água salgada. Pode conter fontes hidrotermais.
+                        </p>
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-auto">
+                            <span class="text-neon-blue text-xs font-bold flex items-center gap-2">
+                                <i class="fa-solid fa-rocket"></i> Missão Clipper (2024)
+                            </span>
+                            <button onclick="openModal('europa')" class="text-sm font-bold text-white hover:text-neon-blue bg-space-700 hover:bg-space-900 px-4 py-2 rounded transition-colors w-full sm:w-auto text-center border border-gray-600">
+                                Ler mais <i class="fa-solid fa-arrow-right ml-1 text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Encélado -->
+                <div class="group relative rounded-2xl overflow-hidden bg-space-800 border border-gray-700 flex flex-col md:flex-row shadow-lg">
+                    <div class="w-full md:w-2/5 h-48 md:h-auto bg-gray-900 relative overflow-hidden flex-shrink-0">
+                        <div class="absolute inset-0 bg-gradient-to-br from-gray-300/60 to-gray-700/80 group-hover:scale-110 transition-transform duration-700"></div>
+                        <div class="absolute inset-0 flex items-center justify-center text-7xl text-white transform group-hover:scale-110 transition-transform duration-500">☄️</div>
+                    </div>
+                    <div class="p-6 md:p-8 md:w-3/5 flex flex-col h-full">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="px-2 py-1 bg-gray-700/50 text-gray-300 text-[10px] md:text-xs font-bold rounded uppercase tracking-wider">Lua de Saturno</span>
+                        </div>
+                        <h3 class="text-2xl font-bold font-orbitron mb-2">Encélado</h3>
+                        <p class="text-gray-400 text-sm mb-6 flex-grow">
+                            Cospe gêiseres gigantescos no espaço. Sondas detectaram moléculas orgânicas, sais e sílica na água.
+                        </p>
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-auto">
+                            <span class="text-green-400 text-xs font-bold flex items-center gap-2">
+                                <i class="fa-solid fa-flask"></i> Ingredientes Confirmados
+                            </span>
+                            <button onclick="openModal('encelado')" class="text-sm font-bold text-white hover:text-neon-blue bg-space-700 hover:bg-space-900 px-4 py-2 rounded transition-colors w-full sm:w-auto text-center border border-gray-600">
+                                Ler mais <i class="fa-solid fa-arrow-right ml-1 text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Exoplanetas -->
+                <div class="group relative rounded-2xl overflow-hidden bg-space-800 border border-gray-700 flex flex-col md:flex-row shadow-lg">
+                    <div class="w-full md:w-2/5 h-48 md:h-auto bg-gray-900 relative overflow-hidden flex-shrink-0">
+                        <div class="absolute inset-0 bg-gradient-to-br from-purple-800/80 to-black group-hover:scale-110 transition-transform duration-700"></div>
+                        <div class="absolute inset-0 flex items-center justify-center text-7xl text-purple-300 animate-pulse-slow">🌌</div>
+                    </div>
+                    <div class="p-6 md:p-8 md:w-3/5 flex flex-col h-full">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="px-2 py-1 bg-purple-900/40 text-purple-400 text-[10px] md:text-xs font-bold rounded uppercase tracking-wider">Além do Sistema Solar</span>
+                        </div>
+                        <h3 class="text-2xl font-bold font-orbitron mb-2">Exoplanetas</h3>
+                        <p class="text-gray-400 text-sm mb-6 flex-grow">
+                            Planetas como TRAPPIST-1e orbitam na zona habitável, onde a água pode existir em estado líquido na superfície.
+                        </p>
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-auto">
+                            <span class="text-neon-purple text-xs font-bold flex items-center gap-2">
+                                <i class="fa-solid fa-eye"></i> Observação: James Webb
+                            </span>
+                            <button onclick="openModal('exoplanetas')" class="text-sm font-bold text-white hover:text-neon-blue bg-space-700 hover:bg-space-900 px-4 py-2 rounded transition-colors w-full sm:w-auto text-center border border-gray-600">
+                                Ler mais <i class="fa-solid fa-arrow-right ml-1 text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Seção Interativa: Simulador SETI -->
+    <section id="interativo" class="py-16 md:py-24 bg-space-800 relative">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-8">
+                <h2 class="font-orbitron text-3xl md:text-4xl font-bold mb-2">Monitoramento de Sinais</h2>
+                <p class="text-gray-400 text-sm sm:text-base">Simulador inspirado no programa SETI (Search for Extraterrestrial Intelligence)</p>
+            </div>
+
+            <div class="bg-space-900 border border-gray-700 rounded-lg overflow-hidden shadow-[0_0_30px_rgba(0,255,102,0.1)] relative" id="seti-container">
+                
+                <!-- Barra de título do terminal -->
+                <div class="bg-[#0a0f18] px-4 py-3 flex items-center justify-between border-b border-gray-800">
+                    <div class="flex items-center gap-2 text-gray-400 text-xs sm:text-sm font-mono">
+                        <i class="fa-solid fa-satellite-dish text-neon-green"></i> TERMINAL SETI-OS v3.1
+                    </div>
+                    <div class="flex gap-2">
+                        <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
+                        <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+                        <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
+                    </div>
+                </div>
+
+                <!-- Tela do terminal -->
+                <div class="p-4 sm:p-8 font-mono relative min-h-[350px] sm:min-h-[400px] flex flex-col bg-[#02050a] text-neon-green">
+                    <div class="scan-line"></div>
+                    
+                    <div id="terminal-output" class="flex-1 overflow-y-auto mb-6 text-xs sm:text-sm md:text-base opacity-90 space-y-2 pb-4 scroll-smooth">
+                        <p>> Inicializando matriz de radiotelescópios...</p>
+                        <p>> Calibrando frequência primária: 1420.405 MHz (Linha HI)...</p>
+                        <p>> Status do sistema: <span class="text-white font-bold bg-green-900/50 px-1">ONLINE</span></p>
+                        <p class="mt-4">> Aguardando comando do operador para varredura de setor.</p>
+                    </div>
+
+                    <!-- Interface de Controle -->
+                    <div class="mt-auto border-t border-gray-800/50 pt-4 sm:pt-6">
+                        <div class="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                            <div class="text-[10px] sm:text-xs text-gray-500 break-all bg-gray-900/50 p-2 rounded border border-gray-800 w-full sm:w-auto text-center sm:text-left">
+                                ALVO ALOCADO: Setor Cygnus / Kepler Field <br>
+                                RA: 19h 22m 44s | Dec: +42° 59′ 31″
+                            </div>
+                            <button id="btn-scan" class="w-full sm:w-auto bg-transparent border border-neon-green text-neon-green hover:bg-neon-green hover:text-black font-bold py-3 px-6 transition-all duration-300 uppercase tracking-widest flex items-center justify-center gap-3 text-sm rounded shadow-[0_0_15px_rgba(0,255,102,0.2)] hover:shadow-[0_0_25px_rgba(0,255,102,0.5)]">
+                                <i class="fa-solid fa-satellite-dish"></i> Iniciar Varredura
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-space-900 py-12 border-t border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                <div class="flex items-center gap-2 cursor-pointer" onclick="window.scrollTo(0,0)">
+                    <i class="fa-solid fa-satellite-dish text-neon-blue"></i>
+                    <span class="font-orbitron font-bold text-lg text-white">ASTRO<span class="text-neon-blue">LIFE</span></span>
+                </div>
+                <p class="text-gray-400 text-sm sm:text-base text-center md:text-left italic">
+                    "A ausência de evidência não é evidência de ausência." <br class="md:hidden"><span class="text-gray-500 not-italic">- Carl Sagan</span>
+                </p>
+                <div class="flex gap-5">
+                    <a href="#" class="text-gray-500 hover:text-neon-purple transition-colors transform hover:scale-110"><i class="fa-brands fa-instagram text-xl"></i></a>
+                    <a href="#" class="text-gray-500 hover:text-neon-blue transition-colors transform hover:scale-110"><i class="fa-brands fa-twitter text-xl"></i></a>
+                    <a href="#" class="text-gray-500 hover:text-white transition-colors transform hover:scale-110"><i class="fa-brands fa-github text-xl"></i></a>
+                </div>
+            </div>
+            <div class="mt-8 pt-8 border-t border-gray-800/50 text-center text-xs text-gray-600">
+                &copy; 2026 Plataforma Educacional de Astrobiologia. Todos os direitos reservados.
+            </div>
+        </div>
+    </footer>
+
+    <!-- MODAL CONTAINER (Oculto por padrão) -->
+    <div id="modal-backdrop" class="fixed inset-0 bg-black/85 backdrop-blur-md z-[100] flex items-center justify-center p-4 sm:p-6 opacity-0 pointer-events-none transition-opacity duration-300">
+        <!-- Caixa do Modal -->
+        <div id="modal-box" class="bg-space-800 border border-gray-700/80 rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col transform scale-95 transition-transform duration-300 shadow-[0_0_50px_rgba(0,0,0,0.8)] relative">
+            
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-gray-700/80 flex justify-between items-center bg-space-900/50 rounded-t-2xl">
+                <h3 id="modal-title" class="font-orbitron font-bold text-xl md:text-2xl text-white flex items-center gap-3">
+                    <!-- Preenchido via JS -->
+                </h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-white bg-gray-800 hover:bg-red-500/20 w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <!-- Modal Body (com scroll) -->
+            <div id="modal-content" class="p-6 md:p-8 overflow-y-auto text-gray-300 leading-relaxed text-sm md:text-base space-y-4">
+                <!-- Preenchido via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Principal -->
     <script>
-        // Efeito de fade do splash screen
-        window.onload = () => {
-            setTimeout(() => {
-                document.getElementById('splash').style.opacity = '0';
-                setTimeout(() => {
-                    document.getElementById('splash').style.display = 'none';
-                }, 700);
-            }, 1500);
+        /* =========================================
+           DADOS DOS MODAIS (CONTEÚDO)
+           ========================================= */
+        const modalData = {
+            'marte': {
+                title: '<span class="text-3xl">🪐</span> O Planeta Vermelho',
+                content: `
+                    <p class="text-lg font-bold text-white mb-4">A Busca por Vida Passada</p>
+                    <p>Marte é o alvo mais acessível na busca por vida fora da Terra. Bilhões de anos atrás, Marte não era um deserto vermelho e gelado, mas sim um mundo com atmosfera espessa, rios, lagos e, possivelmente, um oceano no hemisfério norte.</p>
+                    <p>O foco atual de rovers como o <strong>Perseverance</strong> não é encontrar vida viva andando pela superfície — a radiação ultravioleta e o solo tóxico (percloratos) tornam isso altamente improvável. A busca é por <em>microfósseis</em> e bioassinaturas químicas preservadas nas rochas sedimentares da Cratera Jezero, um antigo delta de rio.</p>
+                    <div class="bg-space-900 p-4 border-l-4 border-red-500 mt-4 rounded">
+                        <h4 class="font-bold text-red-400 mb-2">Descobertas Recentes:</h4>
+                        <ul class="list-disc pl-5 space-y-2 text-sm text-gray-400">
+                            <li>Presença confirmada de moléculas orgânicas complexas no solo (tijolos da vida).</li>
+                            <li>Detecção de variações sazonais de metano na atmosfera (pode ser geológico ou biológico).</li>
+                            <li>Lagos de água líquida extremamente salgada sob as calotas polares subterrâneas.</li>
+                        </ul>
+                    </div>
+                `
+            },
+            'europa': {
+                title: '<span class="text-3xl">🌕</span> Europa, Lua de Júpiter',
+                content: `
+                    <p class="text-lg font-bold text-white mb-4">O Oceano Escondido</p>
+                    <p>A lua Europa abriga um dos ambientes mais promissores para a vida no sistema solar atual. Sob uma crosta de gelo de 10 a 30 km de espessura, existe um oceano global de água líquida que pode ter o dobro do volume de todos os oceanos da Terra combinados.</p>
+                    <p>Como a água se mantém líquida tão longe do sol? Pelo processo de <strong>aquecimento de maré</strong>. A gravidade massiva de Júpiter estica e comprime Europa fisicamente, gerando calor interno. Acredita-se que o fundo desse oceano interaja com rochas quentes, criando fontes hidrotermais.</p>
+                    <p>Na Terra, fontes hidrotermais no fundo do oceano profundo, onde não há luz solar, abrigam ecossistemas inteiros sustentados por <em>quimiossíntese</em> (energia química) em vez de fotossíntese. O mesmo pode estar acontecendo em Europa agora.</p>
+                    <p class="text-neon-blue font-bold mt-4"><i class="fa-solid fa-rocket mr-2"></i> Próximo passo: A missão Europa Clipper da NASA fará sobrevoos rasantes para analisar a crosta e a composição de plumas de vapor d'água.</p>
+                `
+            },
+            'encelado': {
+                title: '<span class="text-3xl">☄️</span> Encélado, Lua de Saturno',
+                content: `
+                    <p class="text-lg font-bold text-white mb-4">Gêiseres Espaciais</p>
+                    <p>Encélado é uma lua pequena e brilhante de Saturno. Em 2005, a sonda Cassini fez uma descoberta impressionante: gêiseres maciços jorrando jatos de água e gelo para o espaço a partir do pólo sul da lua (nas famosas "Listras de Tigre").</p>
+                    <p>Esses jatos provam que existe um oceano subterrâneo. Mais importante ainda, a Cassini voou <em>através</em> dessas plumas e as "provou". Ela detectou:</p>
+                    <ul class="list-disc pl-5 space-y-1 text-gray-400 my-4">
+                        <li>Água líquida e vapor.</li>
+                        <li>Sais (indicando contato entre água e rocha mineral).</li>
+                        <li>Amônia e metano.</li>
+                        <li>Nanogrãos de sílica (que só se formam em água quente, confirmando fontes hidrotermais ativas).</li>
+                        <li>Moléculas orgânicas grandes e complexas.</li>
+                    </ul>
+                    <p>Encélado tem todos os ingredientes básicos que conhecemos para a vida: água, energia química e os elementos químicos corretos (CHNOPS).</p>
+                `
+            },
+            'exoplanetas': {
+                title: '<span class="text-3xl text-neon-purple">🌌</span> Mundos Distantes',
+                content: `
+                    <p class="text-lg font-bold text-white mb-4">A Caça à "Terra 2.0"</p>
+                    <p>Desde a década de 1990, confirmamos a existência de mais de 5.000 exoplanetas (planetas orbitando outras estrelas). O alvo principal são os planetas rochosos que orbitam na <strong>Zona Habitável</strong> (a "Zona Cachinhos Dourados") — a distância exata de uma estrela onde a temperatura permite a existência de água líquida na superfície.</p>
+                    <p>O foco mudou de "descobrir" planetas para "caracterizar" suas atmosferas. O Telescópio Espacial James Webb (JWST) utiliza <em>espectroscopia de trânsito</em>: quando o planeta passa na frente de sua estrela, a luz da estrela atravessa a atmosfera do planeta. Os gases presentes absorvem luz em cores específicas, deixando um "código de barras" na luz captada na Terra.</p>
+                    <div class="bg-space-900/80 p-4 border-l-4 border-purple-500 mt-4 rounded text-sm text-gray-400">
+                        <strong class="text-purple-400 block mb-1">O que procurar? (Bioassinaturas)</strong>
+                        Detectar oxigênio sozinho não basta. Os cientistas procuram gases em desequilíbrio químico, como oxigênio misturado com metano. Sem uma fonte biológica para repô-los constantemente, esses gases reagiriam e desapareceriam.
+                    </div>
+                `
+            },
+            'fermi': {
+                title: '<i class="fa-solid fa-book-journal-whills text-neon-purple mr-2"></i> O Paradoxo de Fermi',
+                content: `
+                    <p class="text-lg font-bold text-white mb-4">"Onde está todo mundo?"</p>
+                    <p>O universo tem cerca de 13,8 bilhões de anos. A nossa galáxia tem entre 100 e 400 bilhões de estrelas. Sabemos hoje que a maioria delas possui planetas. Mesmo que o surgimento da vida seja raro, o número colossal de chances matemáticas dita que a galáxia deveria estar fervilhando com civilizações alienígenas.</p>
+                    <p>Civilizações que surgiram milhões de anos antes de nós deveriam ter tido tempo de sobra para desenvolver viagens interestelares ou, no mínimo, criar sinais de rádio ou megaestruturas visíveis (como Esferas de Dyson).</p>
+                    <p class="font-bold text-white mt-4 mb-2">Possíveis Soluções para o Paradoxo:</p>
+                    <ul class="list-disc pl-5 space-y-3 text-gray-400">
+                        <li><strong>O Grande Filtro:</strong> Existe um obstáculo evolucionário quase impossível de ultrapassar. Pode ser o salto de células simples para complexas, ou a tendência de civilizações tecnológicas se autodestruírem (armas nucleares, mudança climática, IA). <em>Será que o filtro está no nosso passado ou no nosso futuro?</em></li>
+                        <li><strong>Hipótese da Floresta Negra:</strong> O universo é perigoso. Civilizações avançadas escondem-se ativamente por medo de serem aniquiladas por predadores cósmicos.</li>
+                        <li><strong>A Hipótese do Zoológico:</strong> Eles sabem que estamos aqui, mas observam-nos à distância, sem interferir, como animais numa reserva protegida, até atingirmos um nível de maturidade cósmica.</li>
+                    </ul>
+                `
+            },
+            'drake': {
+                title: '<i class="fa-solid fa-calculator text-neon-blue mr-2"></i> A Equação de Drake',
+                content: `
+                    <p class="text-lg font-bold text-white mb-4">Calculando o Desconhecido</p>
+                    <p>Criada em 1961 pelo astrônomo Frank Drake, a equação é um argumento probabilístico para estimar o número de civilizações ativas e comunicativas na Via Láctea. Não é uma equação para dar uma resposta exata, mas sim para guiar o nosso pensamento científico.</p>
+                    <p class="text-center font-orbitron text-xl sm:text-2xl my-6 text-neon-blue bg-space-900 p-4 rounded tracking-widest overflow-x-auto">
+                        N = R* × f<sub class="text-xs">p</sub> × n<sub class="text-xs">e</sub> × f<sub class="text-xs">l</sub> × f<sub class="text-xs">i</sub> × f<sub class="text-xs">c</sub> × L
+                    </p>
+                    <p class="text-sm mb-2 text-gray-300">Onde:</p>
+                    <ul class="text-sm space-y-2 text-gray-400">
+                        <li><strong>R*</strong> = Taxa de formação de estrelas na galáxia.</li>
+                        <li><strong>fp</strong> = Fração de estrelas que têm planetas (hoje sabemos que é quase 1).</li>
+                        <li><strong>ne</strong> = Média de planetas com potencial para suportar a vida por estrela.</li>
+                        <li><strong>fl</strong> = Fração de planetas onde a vida realmente surge.</li>
+                        <li><strong>fi</strong> = Fração de planetas onde surge a vida <em>inteligente</em>.</li>
+                        <li><strong>fc</strong> = Fração de civilizações que desenvolvem tecnologia transmissível no espaço.</li>
+                        <li><strong>L</strong> = O tempo que uma civilização consegue transmitir sinais antes de se extinguir (a variável mais temida).</li>
+                    </ul>
+                `
+            }
         };
 
-        // Função de Navegação entre vistas
-        function showView(viewId) {
-            // Esconder todas as vistas
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            // Mostrar a vista pretendida
-            document.getElementById(viewId).classList.add('active');
-            
-            // Atualizar ícones da barra de navegação
-            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-            
-            // Se a vista for uma das principais, destacar no menu. Se for 'news', não destaca nada.
-            const navElement = document.getElementById('nav-' + viewId);
-            if (navElement) {
-                navElement.classList.add('active');
-            }
+        /* =========================================
+           LÓGICA DO MODAL
+           ========================================= */
+        const modalBackdrop = document.getElementById('modal-backdrop');
+        const modalBox = document.getElementById('modal-box');
+        const modalTitle = document.getElementById('modal-title');
+        const modalContent = document.getElementById('modal-content');
 
-            // Feedback tátil simulado
-            if (window.navigator && window.navigator.vibrate) {
-                window.navigator.vibrate(10);
-            }
+        function openModal(topicId) {
+            const data = modalData[topicId];
+            if (!data) return;
+
+            // Preenche o conteúdo
+            modalTitle.innerHTML = data.title;
+            modalContent.innerHTML = data.content;
+
+            // Anima a abertura
+            modalBackdrop.classList.add('modal-active');
+            modalBox.classList.add('modal-content-active');
+            
+            // Impede rolagem do fundo no mobile
+            document.body.style.overflow = 'hidden';
         }
 
-        // Lógica do Scanner SETI
-        let scanning = false;
-        function startScan() {
-            if (scanning) return;
-            scanning = true;
+        function closeModal() {
+            modalBackdrop.classList.remove('modal-active');
+            modalBox.classList.remove('modal-content-active');
+            document.body.style.overflow = 'auto';
             
-            const btn = document.getElementById('scan-btn');
-            const log = document.getElementById('log');
+            // Limpa após fechar (aguarda transição)
+            setTimeout(() => {
+                modalTitle.innerHTML = '';
+                modalContent.innerHTML = '';
+            }, 300);
+        }
+
+        // Fecha modal clicando fora
+        modalBackdrop.addEventListener('click', (e) => {
+            if (e.target === modalBackdrop) closeModal();
+        });
+
+        // Fechar com a tecla ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modalBackdrop.classList.contains('modal-active')) {
+                closeModal();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            /* =========================================
+               MENU MOBILE E NAVBAR
+               ========================================= */
+            const btnMenu = document.getElementById('mobile-menu-btn');
+            const menu = document.getElementById('mobile-menu');
+            const mobileLinks = document.querySelectorAll('.mobile-link');
+            const navbar = document.getElementById('navbar');
+
+            btnMenu.addEventListener('click', () => {
+                menu.classList.toggle('hidden');
+            });
+
+            mobileLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    menu.classList.add('hidden');
+                });
+            });
+
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 30) {
+                    navbar.classList.add('shadow-lg');
+                    navbar.style.background = 'rgba(3, 7, 18, 0.95)';
+                } else {
+                    navbar.classList.remove('shadow-lg');
+                    navbar.style.background = 'rgba(3, 7, 18, 0.85)';
+                }
+            });
+
+            /* =========================================
+               ANIMAÇÃO DO CANVAS (STARFIELD 3D)
+               ========================================= */
+            const canvas = document.getElementById('starfield');
+            const ctx = canvas.getContext('2d');
             
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> A Processar...';
-            btn.style.opacity = '0.5';
-            
-            log.innerHTML += "<br>> A calibrar antenas...";
-            
-            const steps = [
-                "> A filtrar ruído solar...",
-                "> Análise espectral em curso...",
-                "> Sincronização com matriz VLA...",
-                "> Possível anomalia detetada!"
+            let width, height;
+            let stars = [];
+            // Reduzir estrelas em telas menores por performance
+            const isMobile = window.innerWidth < 768;
+            const numStars = isMobile ? 300 : 700; 
+            let speed = 0.3; // Velocidade base mais suave
+
+            function resize() {
+                width = window.innerWidth;
+                height = window.innerHeight;
+                canvas.width = width;
+                canvas.height = height;
+            }
+
+            window.addEventListener('resize', resize);
+            resize();
+
+            class Star {
+                constructor() {
+                    this.x = Math.random() * width - width / 2;
+                    this.y = Math.random() * height - height / 2;
+                    this.z = Math.random() * width;
+                    this.pz = this.z;
+                }
+
+                update() {
+                    this.z = this.z - speed;
+                    if (this.z < 1) {
+                        this.z = width;
+                        this.x = Math.random() * width - width / 2;
+                        this.y = Math.random() * height - height / 2;
+                        this.pz = this.z;
+                    }
+                }
+
+                show() {
+                    ctx.fillStyle = "white";
+                    
+                    let sx = (this.x / this.z) * width + width / 2;
+                    let sy = (this.y / this.z) * height + height / 2;
+                    let r = Math.max(0, (width - this.z) / width * (isMobile ? 1.5 : 2)); 
+                    
+                    ctx.beginPath();
+                    ctx.arc(sx, sy, r, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    let px = (this.x / this.pz) * width + width / 2;
+                    let py = (this.y / this.pz) * height + height / 2;
+                    this.pz = this.z;
+
+                    ctx.beginPath();
+                    ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
+                    ctx.lineWidth = r * 0.5;
+                    ctx.moveTo(px, py);
+                    ctx.lineTo(sx, sy);
+                    ctx.stroke();
+                }
+            }
+
+            for (let i = 0; i < numStars; i++) {
+                stars.push(new Star());
+            }
+
+            function draw() {
+                ctx.fillStyle = "rgba(3, 7, 18, 1)";
+                ctx.fillRect(0, 0, width, height);
+                ctx.translate(width / 2, height / 2);
+
+                for (let i = 0; i < numStars; i++) {
+                    stars[i].update();
+                    stars[i].show();
+                }
+
+                ctx.translate(-width / 2, -height / 2);
+                requestAnimationFrame(draw);
+            }
+            draw();
+
+            // Interação de velocidade
+            const heroSection = document.getElementById('inicio');
+            heroSection.addEventListener('mouseenter', () => { speed = 3; });
+            heroSection.addEventListener('mouseleave', () => { speed = 0.3; });
+            heroSection.addEventListener('touchstart', () => { speed = 3; }, {passive: true});
+            heroSection.addEventListener('touchend', () => { speed = 0.3; });
+
+            /* =========================================
+               LÓGICA DO SIMULADOR SETI
+               ========================================= */
+            const btnScan = document.getElementById('btn-scan');
+            const terminalOutput = document.getElementById('terminal-output');
+            const setiContainer = document.getElementById('seti-container');
+            let isScanning = false;
+
+            const scanResults = [
+                { text: "[ALERTA] Anomalia estrutural detectada em KIC 8462852 (Estrela de Tabby). Flutuação luminosa irregular. Causa provável: Poeira cósmica.", color: "text-yellow-400" },
+                { text: "[SINAL WOW! v2] Pico de rádio detectado em 1420MHz. Direção: Sagitário. Verificando possibilidade de repetição... Negativo.", color: "text-neon-purple" },
+                { text: "[RESULTADO] Apenas Radiação Cósmica de Fundo registrada. Silêncio absoluto no setor.", color: "text-gray-400" },
+                { text: "[INTERFERÊNCIA] Sinal recebido. Origem identificada: Reflexão de sinal de radar militar da Terra na Lua.", color: "text-red-400" },
+                { text: "[ANÁLISE ALVO] Assinatura espectral de Kepler-186f analisada. H2O confirmada. Nenhuma emissão de rádio artificial detectada.", color: "text-blue-400" },
+                { text: "[CONTATO?!] Sequência matemática repetitiva detectada. Decodificando... Erro estrutural. Origem provável: Pulsar PSR B1919+21.", color: "text-neon-blue" }
             ];
 
-            let i = 0;
-            const interval = setInterval(() => {
-                log.innerHTML += "<br>" + steps[i];
-                log.scrollTop = log.scrollHeight;
-                i++;
+            function addTerminalLine(text, customClass = "") {
+                const p = document.createElement('p');
+                p.className = customClass;
+                p.innerHTML = `> ${text}`;
+                terminalOutput.appendChild(p);
+                // Scroll suave para o fim
+                terminalOutput.scrollTo({ top: terminalOutput.scrollHeight, behavior: 'smooth' });
+            }
+
+            async function typeWriterEffect(text, element, speed = 15) {
+                element.innerHTML = "> ";
+                let i = 0;
+                return new Promise(resolve => {
+                    function type() {
+                        if (i < text.length) {
+                            element.innerHTML += text.charAt(i);
+                            i++;
+                            terminalOutput.scrollTop = terminalOutput.scrollHeight;
+                            setTimeout(type, speed);
+                        } else {
+                            resolve();
+                        }
+                    }
+                    type();
+                });
+            }
+
+            btnScan.addEventListener('click', async () => {
+                if (isScanning) return;
                 
-                if (i >= steps.length) {
-                    clearInterval(interval);
-                    setTimeout(() => {
-                        const results = [
-                            "<span class='text-yellow-400'>[FALSO POSITIVO] Pulsação natural de estrela de neutrões.</span>",
-                            "<span class='text-cyan-400 font-bold'>[WOW! 2.0] Sinal de 72 segundos detetado na Constelação do Sagitário!</span>",
-                            "<span class='text-slate-500'>[SILÊNCIO] Nenhuma transmissão artificial encontrada nesta banda.</span>"
-                        ];
-                        log.innerHTML += "<br><br>" + results[Math.floor(Math.random() * results.length)];
-                        log.innerHTML += "<br>> Standby.";
-                        log.scrollTop = log.scrollHeight;
-                        
-                        btn.innerHTML = 'Iniciar Varredura';
-                        btn.style.opacity = '1';
-                        scanning = false;
-                    }, 1500);
+                isScanning = true;
+                btnScan.disabled = true;
+                btnScan.classList.replace('border-neon-green', 'border-gray-600');
+                btnScan.classList.replace('text-neon-green', 'text-gray-500');
+                btnScan.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Escaneando...';
+                setiContainer.classList.add('scanning');
+                
+                // Limpa terminal se tiver muitas linhas
+                if(terminalOutput.children.length > 8) {
+                    terminalOutput.innerHTML = '<p class="text-gray-500 italic">> Limpando log antigo...</p>';
                 }
-            }, 1000);
-        }
+                
+                const steps = [
+                    "Direcionando antenas parabólicas...",
+                    "Filtrando interferência antropogênica (satélites LEO)...",
+                    "Escaneando 10 milhões de canais simultâneos...",
+                    "Aplicando algoritmo de detecção de padrões FFT..."
+                ];
+
+                for (let step of steps) {
+                    const p = document.createElement('p');
+                    terminalOutput.appendChild(p);
+                    await typeWriterEffect(step, p, 20);
+                    await new Promise(r => setTimeout(r, 600)); 
+                }
+
+                addTerminalLine("Calculando resultados e eliminando falsos positivos...", "animate-pulse text-yellow-500 my-4");
+                
+                await new Promise(r => setTimeout(r, 1200));
+
+                const result = scanResults[Math.floor(Math.random() * scanResults.length)];
+                terminalOutput.removeChild(terminalOutput.lastChild); // Remove loading text
+                
+                addTerminalLine(result.text, result.color + " mt-4 border-l-2 pl-2 border-current bg-white/5 py-2");
+                addTerminalLine("Varredura de setor concluída. Retornando ao modo passivo.", "text-gray-500 mt-4");
+
+                isScanning = false;
+                btnScan.disabled = false;
+                btnScan.classList.replace('border-gray-600', 'border-neon-green');
+                btnScan.classList.replace('text-gray-500', 'text-neon-green');
+                btnScan.innerHTML = '<i class="fa-solid fa-satellite-dish"></i> Iniciar Nova Varredura';
+                setiContainer.classList.remove('scanning');
+            });
+        });
     </script>
 </body>
 </html>
