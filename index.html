@@ -1,643 +1,326 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="scroll-smooth">
+<html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Descoberta Cósmica | A Busca por Vida</title>
-    <!-- Tailwind CSS para estilização rápida e responsiva -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AstroLife Mobile</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome para ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
-    
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        orbitron: ['Orbitron', 'sans-serif'],
-                        sans: ['Roboto', 'sans-serif'],
-                    },
-                    colors: {
-                        space: {
-                            900: '#050B14',
-                            800: '#0A1526',
-                            700: '#112240',
-                        },
-                        neon: {
-                            blue: '#00f3ff',
-                            purple: '#bc13fe',
-                            green: '#00ff66'
-                        }
-                    },
-                    animation: {
-                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                        'float': 'float 6s ease-in-out infinite',
-                    },
-                    keyframes: {
-                        float: {
-                            '0%, 100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-20px)' },
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        /* Estilos customizados adicionais */
+        :root {
+            --bg-dark: #050810;
+            --accent: #00f3ff;
+            --card: #111827;
+        }
         body {
-            background-color: #050B14;
-            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: white;
+            margin: 0;
+            padding: 0;
             overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .font-orbitron { font-family: 'Orbitron', sans-serif; }
+        
+        /* Navegação Inferior */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: rgba(17, 24, 39, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 100;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #94a3b8;
+            font-size: 10px;
+            transition: 0.3s;
+        }
+        .nav-item.active {
+            color: var(--accent);
+        }
+        .nav-item i {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+
+        /* Vistas */
+        .view {
+            display: none;
+            padding: 20px;
+            padding-bottom: 100px;
+            min-height: 100vh;
+        }
+        .view.active {
+            display: block;
+            animation: fadeIn 0.4s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Scanner */
+        .scanner-log {
+            height: 250px;
+            background: #000;
+            border-radius: 12px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 12px;
+            color: #00ff66;
+            overflow-y: auto;
+            border: 1px solid #1f2937;
+        }
+        .scan-btn {
+            background: linear-gradient(45deg, #00f3ff, #bc13fe);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0, 243, 255, 0.3);
         }
         
-        .glass-nav {
-            background: rgba(5, 11, 20, 0.7);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(0, 243, 255, 0.1);
-        }
-
-        .card-hover {
-            transition: all 0.3s ease;
-        }
-        .card-hover:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 10px 30px -10px rgba(0, 243, 255, 0.3);
-            border-color: rgba(0, 243, 255, 0.5);
-        }
-
-        .text-glow {
-            text-shadow: 0 0 10px rgba(0, 243, 255, 0.5), 0 0 20px rgba(0, 243, 255, 0.3);
-        }
-
-        /* Canvas background */
-        #starfield {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            pointer-events: none;
-        }
-
-        .content-layer {
-            position: relative;
-            z-index: 10;
-        }
-
-        /* Efeito de scan */
-        .scan-line {
-            width: 100%;
-            height: 2px;
-            background-color: #00ff66;
-            box-shadow: 0 0 10px #00ff66, 0 0 20px #00ff66;
-            position: absolute;
-            top: 0;
-            left: 0;
-            opacity: 0;
-            z-index: 20;
-        }
-
-        .scanning .scan-line {
-            animation: scanAnim 2s linear infinite;
-            opacity: 1;
-        }
-
-        @keyframes scanAnim {
-            0% { top: 0; }
-            50% { top: 100%; }
-            100% { top: 0; }
+        /* Planetas */
+        .planet-card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255,255,255,0.05);
         }
     </style>
 </head>
-<body class="antialiased selection:bg-neon-blue selection:text-space-900">
+<body>
 
-    <!-- Navegação -->
-    <nav class="fixed w-full z-50 glass-nav transition-all duration-300" id="navbar">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-20">
-                <div class="flex-shrink-0 flex items-center gap-3 cursor-pointer">
-                    <i class="fa-solid fa-satellite-dish text-neon-blue text-2xl animate-pulse"></i>
-                    <span class="font-orbitron font-bold text-xl tracking-wider text-white">ASTRO<span class="text-neon-blue">LIFE</span></span>
-                </div>
-                <div class="hidden md:block">
-                    <div class="ml-10 flex items-baseline space-x-8">
-                        <a href="#inicio" class="text-gray-300 hover:text-neon-blue px-3 py-2 rounded-md text-sm font-medium transition-colors">Início</a>
-                        <a href="#evidencias" class="text-gray-300 hover:text-neon-blue px-3 py-2 rounded-md text-sm font-medium transition-colors">Evidências</a>
-                        <a href="#destinos" class="text-gray-300 hover:text-neon-blue px-3 py-2 rounded-md text-sm font-medium transition-colors">Destinos</a>
-                        <a href="#interativo" class="border border-neon-blue text-neon-blue hover:bg-neon-blue hover:text-space-900 px-4 py-2 rounded-md text-sm font-medium transition-all">Scanner SETI</a>
-                    </div>
-                </div>
-                <!-- Mobile menu button -->
-                <div class="md:hidden flex items-center">
-                    <button id="mobile-menu-btn" class="text-gray-300 hover:text-white focus:outline-none">
-                        <i class="fa-solid fa-bars text-2xl"></i>
-                    </button>
+    <!-- Ecrã de Splash Simulado -->
+    <div id="splash" class="fixed inset-0 z-[200] bg-[#050810] flex flex-col items-center justify-center transition-opacity duration-700">
+        <div class="text-4xl text-cyan-400 mb-4 animate-pulse">
+            <i class="fa-solid fa-satellite-dish"></i>
+        </div>
+        <h1 class="font-orbitron text-2xl font-bold tracking-widest uppercase">AstroLife</h1>
+        <p class="text-xs text-slate-500 mt-2">A carregar o cosmos...</p>
+    </div>
+
+    <!-- VISTA INICIAL (HOME) -->
+    <div id="home" class="view active">
+        <div class="mt-8 mb-10 text-center">
+            <h1 class="font-orbitron text-3xl font-black mb-2">ASTRO<span class="text-cyan-400">LIFE</span></h1>
+            <p class="text-slate-400 text-sm">Explora a fronteira final no teu bolso.</p>
+        </div>
+
+        <div class="grid grid-cols-1 gap-4">
+            <!-- Card de Notícia com Clique para "Ler Mais" -->
+            <div onclick="showView('news')" class="bg-gradient-to-r from-blue-900/40 to-cyan-900/40 p-6 rounded-2xl border border-cyan-500/20 active:scale-95 transition-transform cursor-pointer">
+                <h2 class="font-orbitron text-lg font-bold mb-2 text-white">Última Notícia</h2>
+                <p class="text-sm text-slate-300">Telescópio James Webb deteta sinais de metano em exoplaneta habitável.</p>
+                <div class="mt-4 text-xs text-cyan-400 font-bold uppercase flex items-center gap-2">
+                    Ler Mais <i class="fa-solid fa-arrow-right"></i>
                 </div>
             </div>
-        </div>
-        <!-- Mobile Menu -->
-    <div id="mobile-menu" class="hidden md:hidden bg-space-800 border-b border-gray-700">
-        <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <a href="#inicio" class="mobile-link block px-3 py-2 rounded-md text-base font-medium text-white hover:text-neon-blue">Início</a>
-            <a href="#evidencias" class="mobile-link block px-3 py-2 rounded-md text-base font-medium text-white hover:text-neon-blue">Evidências</a>
-            <a href="#destinos" class="mobile-link block px-3 py-2 rounded-md text-base font-medium text-white hover:text-neon-blue">Destinos</a>
-            <a href="#interativo" class="mobile-link block px-3 py-2 rounded-md text-base font-medium text-neon-blue">Scanner SETI</a>
+
+            <div class="planet-card flex items-center gap-4 active:scale-95 transition-transform cursor-pointer" onclick="showView('planets')">
+                <div class="w-12 h-12 bg-red-900/20 rounded-full flex items-center justify-center text-red-500">
+                    <i class="fa-solid fa-earth-americas"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold">Mundos Habitáveis</h3>
+                    <p class="text-xs text-slate-400">Marte, Europa e Encélado.</p>
+                </div>
+                <i class="fa-solid fa-chevron-right ml-auto text-slate-600"></i>
+            </div>
         </div>
     </div>
-</nav>
 
-<!-- Hero Section com Canvas -->
-<section id="inicio" class="relative min-h-screen flex items-center justify-center overflow-hidden pt-28 pb-10">
-    <!-- Canvas para as estrelas -->
-        <canvas id="starfield"></canvas>
+    <!-- VISTA DE NOTÍCIA DETALHADA -->
+    <div id="news" class="view">
+        <div class="flex items-center gap-4 mb-6 pt-4">
+            <button onclick="showView('home')" class="text-cyan-400 text-xl"><i class="fa-solid fa-arrow-left"></i></button>
+            <h2 class="font-orbitron text-xl font-bold">Notícia Detalhada</h2>
+        </div>
+
+        <div class="rounded-2xl overflow-hidden mb-6">
+            <div class="h-48 bg-slate-800 flex items-center justify-center text-5xl text-slate-700">
+                <i class="fa-solid fa-satellite"></i>
+            </div>
+        </div>
+
+        <h1 class="text-2xl font-bold mb-4 leading-tight">Descoberta Histórica: Metano Detetado no K2-18b</h1>
         
-        <!-- Gradiente de sobreposição -->
-        <div class="absolute inset-0 bg-gradient-to-b from-transparent via-space-900/50 to-space-900 z-0"></div>
+        <div class="flex items-center gap-2 mb-6 text-xs text-slate-400 uppercase tracking-widest">
+            <span class="text-cyan-400 font-bold">Fonte: NASA / ESA</span>
+            <span>•</span>
+            <span>23 Fev 2026</span>
+        </div>
 
-        <div class="relative z-10 text-center px-4 max-w-4xl mx-auto content-layer">
-            <h1 class="font-orbitron text-5xl md:text-7xl font-black mb-6 tracking-tight">
-                NÃO ESTAMOS <span class="text-transparent bg-clip-text bg-gradient-to-r from-neon-blue to-neon-purple text-glow">SOZINHOS</span>
-            </h1>
-            <p class="text-xl md:text-2xl text-gray-300 mb-10 font-light max-w-2xl mx-auto leading-relaxed">
-                A humanidade está à beira de responder à pergunta mais profunda de todas: existe vida além da Terra? Explore as últimas descobertas astrobiológicas.
+        <div class="space-y-4 text-slate-300 leading-relaxed text-sm">
+            <p>O Telescópio Espacial James Webb (JWST) identificou moléculas contendo carbono, incluindo metano e dióxido de carbono, na atmosfera do exoplaneta K2-18b.</p>
+            <p>Este mundo, que tem 8,6 vezes a massa da Terra, orbita a estrela anã fria K2-18 na zona habitável e situa-se a 120 anos-luz do nosso sistema solar.</p>
+            <p>A abundância de metano e dióxido de carbono, e a escassez de amoníaco, apoiam a hipótese de que pode haver um oceano de água líquida sob uma atmosfera rica em hidrogénio em K2-18b.</p>
+            <p>Estas observações iniciais do Webb também forneceram uma possível deteção de uma molécula chamada sulfureto de dimetilo (DMS). Na Terra, esta molécula é apenas produzida pela vida - especificamente, pelo fitoplâncton em ambientes marinhos.</p>
+        </div>
+
+        <button onclick="showView('home')" class="mt-8 w-full bg-slate-800 py-3 rounded-xl font-bold text-sm">Voltar ao Início</button>
+    </div>
+
+    <!-- VISTA DE PLANETAS -->
+    <div id="planets" class="view">
+        <h2 class="font-orbitron text-xl font-bold mb-6 pt-4"><i class="fa-solid fa-globe mr-2 text-cyan-400"></i> Mundos Candidatos</h2>
+        
+        <div class="planet-card">
+            <div class="flex justify-between items-start mb-2">
+                <h3 class="font-bold text-lg">Marte</h3>
+                <span class="text-[10px] bg-red-500/20 text-red-400 px-2 py-1 rounded">Vizinhança</span>
+            </div>
+            <p class="text-sm text-slate-400">Procura de fósseis microbianos em antigos leitos de rios secos pelo Rover Perseverance.</p>
+        </div>
+
+        <div class="planet-card">
+            <div class="flex justify-between items-start mb-2">
+                <h3 class="font-bold text-lg">Europa</h3>
+                <span class="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-1 rounded">Lua de Júpiter</span>
+            </div>
+            <p class="text-sm text-slate-400">Um oceano global de água salgada debaixo de 10km de gelo. Possíveis fontes hidrotermais.</p>
+        </div>
+
+        <div class="planet-card">
+            <div class="flex justify-between items-start mb-2">
+                <h3 class="font-bold text-lg">Exoplaneta K2-18b</h3>
+                <span class="text-[10px] bg-purple-500/20 text-purple-400 px-2 py-1 rounded">Fora do Sistema Solar</span>
+            </div>
+            <p class="text-sm text-slate-400">Detetadas bioassinaturas na atmosfera por espectroscopia. Mundos oceanos em zonas habitáveis.</p>
+        </div>
+    </div>
+
+    <!-- VISTA DE SCANNER -->
+    <div id="scanner" class="view">
+        <h2 class="font-orbitron text-xl font-bold mb-6 pt-4"><i class="fa-solid fa-satellite-dish mr-2 text-cyan-400"></i> Scanner SETI</h2>
+        
+        <div class="scanner-log mb-6" id="log">
+            > Sistema de Escuta Profunda ativo...<br>
+            > À espera de sinal de rádio...<br>
+            > Alinhamento: Alpha Centauri.
+        </div>
+
+        <button onclick="startScan()" id="scan-btn" class="scan-btn w-full text-black uppercase tracking-widest text-sm">
+            Iniciar Varredura
+        </button>
+
+        <div class="mt-8 p-4 bg-slate-900/50 rounded-xl border border-slate-800">
+            <h4 class="text-xs font-bold text-slate-500 uppercase mb-2">Explicação Técnica</h4>
+            <p class="text-xs text-slate-400 leading-relaxed">
+                Este simulador procura por sinais de banda estreita na linha de 21cm do Hidrogénio (1420 MHz), a frequência mais provável para comunicação alienígena.
             </p>
-            <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="#evidencias" class="bg-neon-blue text-space-900 font-bold px-8 py-4 rounded-full hover:bg-white hover:shadow-[0_0_20px_rgba(0,243,255,0.6)] transition-all duration-300 transform hover:-translate-y-1">
-                    Explorar Evidências
-                </a>
-                <a href="#interativo" class="border border-gray-500 text-white font-bold px-8 py-4 rounded-full hover:border-neon-purple hover:text-neon-purple transition-all duration-300">
-                    Iniciar Simulação
-                </a>
-            </div>
         </div>
+    </div>
 
-        <!-- Scroll indicator -->
-        <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce z-10 text-gray-400">
-            <i class="fa-solid fa-chevron-down text-2xl"></i>
+    <!-- Navegação Inferior -->
+    <nav class="bottom-nav">
+        <div class="nav-item active" id="nav-home" onclick="showView('home')">
+            <i class="fa-solid fa-house"></i>
+            <span>Início</span>
         </div>
-    </section>
-
-    <!-- Seção O Que Sabemos -->
-    <section id="evidencias" class="py-24 bg-space-900 relative">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div class="text-center mb-16">
-                <h2 class="font-orbitron text-3xl md:text-5xl font-bold mb-4">A Nova Fronteira da <span class="text-neon-purple">Astrobiologia</span></h2>
-                <div class="w-24 h-1 bg-neon-blue mx-auto rounded-full"></div>
-                <p class="mt-6 text-gray-400 max-w-2xl mx-auto text-lg">
-                    Não estamos mais procurando por "homenzinhos verdes". A busca moderna foca em bioassinaturas, extremófilos e oceanos subterrâneos.
-                </p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <!-- Card 1 -->
-                <div class="bg-space-800 p-8 rounded-2xl border border-gray-800 card-hover">
-                    <div class="w-14 h-14 bg-blue-900/50 rounded-lg flex items-center justify-center mb-6 border border-blue-500/30">
-                        <i class="fa-solid fa-droplet text-neon-blue text-2xl"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-3 font-orbitron text-white">A Regra da Água</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed">
-                        Na Terra, onde há água líquida, há vida. O foco atual das agências espaciais é "seguir a água". Luas congeladas com oceanos internos são os principais alvos hoje.
-                    </p>
-                </div>
-
-                <!-- Card 2 -->
-                <div class="bg-space-800 p-8 rounded-2xl border border-gray-800 card-hover">
-                    <div class="w-14 h-14 bg-purple-900/50 rounded-lg flex items-center justify-center mb-6 border border-purple-500/30">
-                        <i class="fa-solid fa-bug text-neon-purple text-2xl"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-3 font-orbitron text-white">Extremófilos</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed">
-                        Descobrimos bactérias terrestres vivendo em reatores nucleares, vulcões submarinos e no gelo da Antártica. A vida é muito mais resistente do que imaginávamos.
-                    </p>
-                </div>
-
-                <!-- Card 3 -->
-                <div class="bg-space-800 p-8 rounded-2xl border border-gray-800 card-hover">
-                    <div class="w-14 h-14 bg-green-900/50 rounded-lg flex items-center justify-center mb-6 border border-green-500/30">
-                        <i class="fa-solid fa-fingerprint text-neon-green text-2xl"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-3 font-orbitron text-white">Bioassinaturas</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed">
-                        Telescópios como o James Webb analisam a luz de exoplanetas distantes buscando gases na atmosfera (como metano e oxigênio juntos) que indicariam processos biológicos.
-                    </p>
-                </div>
-            </div>
+        <div class="nav-item" id="nav-planets" onclick="showView('planets')">
+            <i class="fa-solid fa-earth-mars"></i>
+            <span>Mundos</span>
         </div>
-    </section>
-
-    <!-- Seção Destinos Promissores -->
-    <section id="destinos" class="py-24 bg-space-800 border-t border-b border-gray-800 relative overflow-hidden">
-        <!-- Círculos decorativos -->
-        <div class="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 rounded-full bg-neon-purple opacity-5 blur-[100px]"></div>
-        <div class="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 rounded-full bg-neon-blue opacity-5 blur-[100px]"></div>
-
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div class="flex flex-col md:flex-row justify-between items-end mb-12">
-                <div class="max-w-2xl">
-                    <h2 class="font-orbitron text-3xl md:text-5xl font-bold mb-4">Mundos <span class="text-neon-blue">Candidatos</span></h2>
-                    <p class="text-gray-400 text-lg">Os locais no nosso Sistema Solar (e além) com maior probabilidade de abrigar vida alienígena microbiana ou complexa.</p>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                <!-- Marte -->
-                <div class="group relative rounded-2xl overflow-hidden bg-space-900 border border-gray-700 flex flex-col md:flex-row">
-                    <div class="md:w-2/5 h-48 md:h-auto bg-gray-800 relative overflow-hidden">
-                        <!-- Imagem mockada usando div colorida para evitar links externos quebrados -->
-                        <div class="absolute inset-0 bg-gradient-to-br from-red-800 to-orange-900 opacity-80 group-hover:scale-110 transition-transform duration-700"></div>
-                        <div class="absolute inset-0 flex items-center justify-center opacity-30 text-6xl">🪐</div>
-                    </div>
-                    <div class="p-6 md:w-3/5 flex flex-col justify-center">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="px-2 py-1 bg-red-900/50 text-red-400 text-xs font-bold rounded uppercase tracking-wider">Planeta Vizinho</span>
-                        </div>
-                        <h3 class="text-2xl font-bold font-orbitron mb-2">Marte</h3>
-                        <p class="text-gray-400 text-sm mb-4">
-                            Outrora um mundo quente e úmido com oceanos. Hoje, rovers como o Perseverance buscam fósseis microscópicos no leito seco de antigos rios e lagos.
-                        </p>
-                        <div class="mt-auto">
-                            <span class="text-neon-blue text-sm font-bold flex items-center gap-2">
-                                <i class="fa-solid fa-radar"></i> Status: Exploração Ativa
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Europa -->
-                <div class="group relative rounded-2xl overflow-hidden bg-space-900 border border-gray-700 flex flex-col md:flex-row">
-                    <div class="md:w-2/5 h-48 md:h-auto bg-gray-800 relative overflow-hidden">
-                        <div class="absolute inset-0 bg-gradient-to-br from-blue-200 to-blue-800 opacity-70 group-hover:scale-110 transition-transform duration-700"></div>
-                        <div class="absolute inset-0 flex items-center justify-center opacity-40 text-6xl text-white shadow-xl">🌕</div>
-                    </div>
-                    <div class="p-6 md:w-3/5 flex flex-col justify-center">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="px-2 py-1 bg-blue-900/50 text-blue-400 text-xs font-bold rounded uppercase tracking-wider">Lua de Júpiter</span>
-                        </div>
-                        <h3 class="text-2xl font-bold font-orbitron mb-2">Europa</h3>
-                        <p class="text-gray-400 text-sm mb-4">
-                            Sob uma crosta de gelo quilométrica, esconde-se um oceano global de água salgada, mantido líquido pela força gravitacional de Júpiter. Pode ter fontes hidrotermais.
-                        </p>
-                        <div class="mt-auto">
-                            <span class="text-neon-blue text-sm font-bold flex items-center gap-2">
-                                <i class="fa-solid fa-rocket"></i> Missão: Europa Clipper (2024)
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Encélado -->
-                <div class="group relative rounded-2xl overflow-hidden bg-space-900 border border-gray-700 flex flex-col md:flex-row">
-                    <div class="md:w-2/5 h-48 md:h-auto bg-gray-800 relative overflow-hidden">
-                        <div class="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-500 opacity-60 group-hover:scale-110 transition-transform duration-700"></div>
-                        <div class="absolute inset-0 flex items-center justify-center opacity-50 text-6xl text-white">☄️</div>
-                    </div>
-                    <div class="p-6 md:w-3/5 flex flex-col justify-center">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="px-2 py-1 bg-gray-700/50 text-gray-300 text-xs font-bold rounded uppercase tracking-wider">Lua de Saturno</span>
-                        </div>
-                        <h3 class="text-2xl font-bold font-orbitron mb-2">Encélado</h3>
-                        <p class="text-gray-400 text-sm mb-4">
-                            Cospe gêiseres gigantescos de água no espaço. A sonda Cassini voou através deles e detectou moléculas orgânicas complexas, sais e sílica.
-                        </p>
-                        <div class="mt-auto">
-                            <span class="text-neon-blue text-sm font-bold flex items-center gap-2">
-                                <i class="fa-solid fa-flask"></i> Status: Ingredientes para vida confirmados
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Exoplanetas -->
-                <div class="group relative rounded-2xl overflow-hidden bg-space-900 border border-gray-700 flex flex-col md:flex-row">
-                    <div class="md:w-2/5 h-48 md:h-auto bg-gray-800 relative overflow-hidden">
-                        <div class="absolute inset-0 bg-gradient-to-br from-purple-800 to-black opacity-90 group-hover:scale-110 transition-transform duration-700"></div>
-                        <div class="absolute inset-0 flex items-center justify-center text-6xl text-purple-300">🌌</div>
-                    </div>
-                    <div class="p-6 md:w-3/5 flex flex-col justify-center">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="px-2 py-1 bg-purple-900/50 text-purple-400 text-xs font-bold rounded uppercase tracking-wider">Além do Sistema Solar</span>
-                        </div>
-                        <h3 class="text-2xl font-bold font-orbitron mb-2">Exoplanetas</h3>
-                        <p class="text-gray-400 text-sm mb-4">
-                            Planetas como TRAPPIST-1e orbitam na "zona habitável" de suas estrelas, onde a água pode existir em estado líquido. São alvos de telescópios de nova geração.
-                        </p>
-                        <div class="mt-auto">
-                            <span class="text-neon-purple text-sm font-bold flex items-center gap-2">
-                                <i class="fa-solid fa-eye"></i> Observatório: James Webb
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div class="nav-item" id="nav-scanner" onclick="showView('scanner')">
+            <i class="fa-solid fa-radar"></i>
+            <span>Scanner</span>
         </div>
-    </section>
+    </nav>
 
-    <!-- Seção Interativa: Simulador SETI -->
-    <section id="interativo" class="py-24 bg-space-900 relative">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="bg-space-800 border-2 border-gray-700 rounded-lg overflow-hidden shadow-2xl relative" id="seti-container">
-                
-                <!-- Barra de título do terminal -->
-                <div class="bg-gray-900 px-4 py-2 flex items-center justify-between border-b border-gray-700">
-                    <div class="flex items-center gap-2 text-gray-400 text-sm font-mono">
-                        <i class="fa-solid fa-terminal"></i> Terminal de Rádio SETI V-2.4
-                    </div>
-                    <div class="flex gap-2">
-                        <div class="w-3 h-3 rounded-full bg-red-500"></div>
-                        <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
-                        <div class="w-3 h-3 rounded-full bg-green-500"></div>
-                    </div>
-                </div>
-
-                <!-- Tela do terminal -->
-                <div class="p-8 font-mono relative min-h-[400px] flex flex-col bg-[#02050a] text-neon-green">
-                    <!-- Linha de escaneamento visual -->
-                    <div class="scan-line"></div>
-                    
-                    <div id="terminal-output" class="flex-1 overflow-y-auto mb-6 text-sm md:text-base opacity-80 space-y-2">
-                        <p>> Inicializando matriz de radiotelescópios...</p>
-                        <p>> Calibrando frequências (1.42 GHz - Linha do Hidrogênio)...</p>
-                        <p>> Status do sistema: <span class="text-white">PRONTO</span></p>
-                        <p class="mt-4">> Aguardando comando do operador para iniciar varredura de céu profundo.</p>
-                    </div>
-
-                    <!-- Interface de Controle -->
-                    <div class="mt-auto border-t border-gray-800 pt-6">
-                        <div class="flex flex-col sm:flex-row gap-4 items-center justify-between">
-                            <div class="text-xs text-gray-500">
-                                ALVO: Setor Alpha Centauri / Constelação do Cisne
-                            </div>
-                            <button id="btn-scan" class="w-full sm:w-auto bg-transparent border-2 border-neon-green text-neon-green hover:bg-neon-green hover:text-black font-bold py-3 px-6 rounded transition-all duration-200 uppercase tracking-widest flex items-center justify-center gap-3">
-                                <i class="fa-solid fa-satellite-dish"></i> Iniciar Varredura
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="bg-space-900 py-12 border-t border-gray-800">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex flex-col md:flex-row justify-between items-center gap-6">
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-satellite-dish text-neon-blue"></i>
-                    <span class="font-orbitron font-bold text-lg text-white">ASTRO<span class="text-neon-blue">LIFE</span></span>
-                </div>
-                <p class="text-gray-500 text-sm text-center md:text-left">
-                    "A ausência de evidência não é evidência de ausência." - Carl Sagan
-                </p>
-                <div class="flex gap-4">
-                    <a href="https://www.instagram.com/de.signergabriel?igsh=enhtNmVkOGh6bmJr" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-white transition-colors"><i class="fa-brands fa-instagram text-xl"></i></a>
-                    <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fa-brands fa-twitter text-xl"></i></a>
-                    <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fa-brands fa-github text-xl"></i></a>
-                    <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fa-brands fa-youtube text-xl"></i></a>
-                </div>
-            </div>
-            <div class="mt-8 pt-8 border-t border-gray-800 text-center text-xs text-gray-600">
-                &copy; 2026 Plataforma Educacional de Astrobiologia. Criado para demonstração.
-            </div>
-        </div>
-    </footer>
-
-    <!-- Arquivo JavaScript Incorporado -->
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        // Efeito de fade do splash screen
+        window.onload = () => {
+            setTimeout(() => {
+                document.getElementById('splash').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('splash').style.display = 'none';
+                }, 700);
+            }, 1500);
+        };
+
+        // Função de Navegação entre vistas
+        function showView(viewId) {
+            // Esconder todas as vistas
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            // Mostrar a vista pretendida
+            document.getElementById(viewId).classList.add('active');
             
-            /* =========================================
-               1. MENU MOBILE
-               ========================================= */
-            const btn = document.getElementById('mobile-menu-btn');
-            const menu = document.getElementById('mobile-menu');
-            const mobileLinks = document.querySelectorAll('.mobile-link');
-
-            btn.addEventListener('click', () => {
-                menu.classList.toggle('hidden');
-            });
-
-            // Fecha o menu mobile ao clicar num link
-            mobileLinks.forEach(link => {
-                link.addEventListener('click', () => {
-                    menu.classList.add('hidden');
-                });
-            });
-
-            /* =========================================
-               2. EFEITO NAVBAR NO SCROLL
-               ========================================= */
-            const navbar = document.getElementById('navbar');
-            window.addEventListener('scroll', () => {
-                if (window.scrollY > 50) {
-                    navbar.classList.add('shadow-lg');
-                    navbar.style.background = 'rgba(5, 11, 20, 0.9)';
-                } else {
-                    navbar.classList.remove('shadow-lg');
-                    navbar.style.background = 'rgba(5, 11, 20, 0.7)';
-                }
-            });
-
-            /* =========================================
-               3. ANIMAÇÃO DO CANVAS (STARFIELD 3D)
-               ========================================= */
-            const canvas = document.getElementById('starfield');
-            const ctx = canvas.getContext('2d');
+            // Atualizar ícones da barra de navegação
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
             
-            let width, height;
-            let stars = [];
-            const numStars = 800; // Quantidade de estrelas
-            let speed = 0.5; // Velocidade inicial
-
-            function resize() {
-                width = window.innerWidth;
-                height = window.innerHeight;
-                canvas.width = width;
-                canvas.height = height;
+            // Se a vista for uma das principais, destacar no menu. Se for 'news', não destaca nada.
+            const navElement = document.getElementById('nav-' + viewId);
+            if (navElement) {
+                navElement.classList.add('active');
             }
 
-            window.addEventListener('resize', resize);
-            resize();
-
-            // Classe da Estrela
-            class Star {
-                constructor() {
-                    this.x = Math.random() * width - width / 2;
-                    this.y = Math.random() * height - height / 2;
-                    this.z = Math.random() * width;
-                    this.pz = this.z;
-                }
-
-                update() {
-                    this.z = this.z - speed;
-                    if (this.z < 1) {
-                        this.z = width;
-                        this.x = Math.random() * width - width / 2;
-                        this.y = Math.random() * height - height / 2;
-                        this.pz = this.z;
-                    }
-                }
-
-                show() {
-                    ctx.fill();
-                    ctx.fillStyle = "white";
-                    
-                    let sx = (this.x / this.z) * width + width / 2;
-                    let sy = (this.y / this.z) * height + height / 2;
-
-                    // Calcula o raio baseado na profundidade e impede que seja um valor negativo usando Math.max()
-                    let r = Math.max(0, (width - this.z) / width * 2); 
-                    
-                    ctx.beginPath();
-                    ctx.arc(sx, sy, r, 0, Math.PI * 2);
-                    ctx.fill();
-
-                    // Desenha o rastro
-                    let px = (this.x / this.pz) * width + width / 2;
-                    let py = (this.y / this.pz) * height + height / 2;
-
-                    this.pz = this.z;
-
-                    ctx.beginPath();
-                    ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
-                    ctx.lineWidth = r;
-                    ctx.moveTo(px, py);
-                    ctx.lineTo(sx, sy);
-                    ctx.stroke();
-                }
+            // Feedback tátil simulado
+            if (window.navigator && window.navigator.vibrate) {
+                window.navigator.vibrate(10);
             }
+        }
 
-            // Inicializa as estrelas
-            for (let i = 0; i < numStars; i++) {
-                stars.push(new Star());
-            }
-
-            // Loop de animação
-            function draw() {
-                // Fundo semi-transparente para criar o rastro escuro
-                ctx.fillStyle = "rgba(5, 11, 20, 1)";
-                ctx.fillRect(0, 0, width, height);
-                
-                // Centraliza a origem no meio da tela
-                ctx.translate(width / 2, height / 2);
-
-                for (let i = 0; i < numStars; i++) {
-                    stars[i].update();
-                    stars[i].show();
-                }
-
-                // Reseta a translação para o próximo frame
-                ctx.translate(-width / 2, -height / 2);
-                
-                requestAnimationFrame(draw);
-            }
-
-            draw();
-
-            // Acelera as estrelas quando o usuário passa o mouse por cima do hero
-            const heroSection = document.getElementById('inicio');
-            heroSection.addEventListener('mouseenter', () => speed = 5);
-            heroSection.addEventListener('mouseleave', () => speed = 0.5);
-
-            // Adiciona suporte para ecrãs táteis (smartphones/tablets)
-            heroSection.addEventListener('touchstart', (e) => {
-                speed = 5;
-            }, {passive: true});
+        // Lógica do Scanner SETI
+        let scanning = false;
+        function startScan() {
+            if (scanning) return;
+            scanning = true;
             
-            heroSection.addEventListener('touchend', () => {
-                speed = 0.5;
-            });
-
-            /* =========================================
-               4. LÓGICA DO SIMULADOR SETI
-               ========================================= */
-            const btnScan = document.getElementById('btn-scan');
-            const terminalOutput = document.getElementById('terminal-output');
-            const setiContainer = document.getElementById('seti-container');
-            let isScanning = false;
-
-            // Possíveis resultados da varredura
-            const scanResults = [
-                { text: "[ALERTA] Anomalia detectada em KIC 8462852. Padrão de escurecimento não natural. Provável: Ruído cósmico.", color: "text-yellow-400" },
-                { text: "[SINAL WOW! v2] Pico de rádio de banda estreita detectado em Sagittario. Verificando repetição...", color: "text-neon-purple" },
-                { text: "[RESULTADO] Apenas Radiação Cósmica de Fundo. Nenhuma estrutura artificial identificada.", color: "text-gray-400" },
-                { text: "[INTERFERÊNCIA] Sinal terrestre refletido por detritos espaciais (Satélite desativado).", color: "text-gray-400" },
-                { text: "[CONTATO?!] Sequência de números primos detectada em 1420MHz. Origem: Sistema TRAPPIST-1.", color: "text-neon-blue font-bold text-lg" }
+            const btn = document.getElementById('scan-btn');
+            const log = document.getElementById('log');
+            
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> A Processar...';
+            btn.style.opacity = '0.5';
+            
+            log.innerHTML += "<br>> A calibrar antenas...";
+            
+            const steps = [
+                "> A filtrar ruído solar...",
+                "> Análise espectral em curso...",
+                "> Sincronização com matriz VLA...",
+                "> Possível anomalia detetada!"
             ];
 
-            function addTerminalLine(text, customClass = "") {
-                const p = document.createElement('p');
-                p.className = customClass;
-                p.innerHTML = `> ${text}`;
-                terminalOutput.appendChild(p);
-                terminalOutput.scrollTop = terminalOutput.scrollHeight;
-            }
-
-            async function typeWriterEffect(text, element, speed = 20) {
-                element.innerHTML = "> ";
-                let i = 0;
-                return new Promise(resolve => {
-                    function type() {
-                        if (i < text.length) {
-                            element.innerHTML += text.charAt(i);
-                            i++;
-                            terminalOutput.scrollTop = terminalOutput.scrollHeight;
-                            setTimeout(type, speed);
-                        } else {
-                            resolve();
-                        }
-                    }
-                    type();
-                });
-            }
-
-            btnScan.addEventListener('click', async () => {
-                if (isScanning) return;
+            let i = 0;
+            const interval = setInterval(() => {
+                log.innerHTML += "<br>" + steps[i];
+                log.scrollTop = log.scrollHeight;
+                i++;
                 
-                isScanning = true;
-                btnScan.disabled = true;
-                btnScan.classList.add('opacity-50', 'cursor-not-allowed');
-                setiContainer.classList.add('scanning');
-                
-                terminalOutput.innerHTML = ''; // Limpa terminal
-                
-                const steps = [
-                    "Direcionando antenas...",
-                    "Filtrando interferência de rádio terrestre...",
-                    "Escaneando espectro eletromagnético...",
-                    "Analisando dados via algoritmo de IA..."
-                ];
-
-                for (let step of steps) {
-                    const p = document.createElement('p');
-                    terminalOutput.appendChild(p);
-                    await typeWriterEffect(step, p, 30);
-                    await new Promise(r => setTimeout(r, 800)); // Pausa entre passos
+                if (i >= steps.length) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        const results = [
+                            "<span class='text-yellow-400'>[FALSO POSITIVO] Pulsação natural de estrela de neutrões.</span>",
+                            "<span class='text-cyan-400 font-bold'>[WOW! 2.0] Sinal de 72 segundos detetado na Constelação do Sagitário!</span>",
+                            "<span class='text-slate-500'>[SILÊNCIO] Nenhuma transmissão artificial encontrada nesta banda.</span>"
+                        ];
+                        log.innerHTML += "<br><br>" + results[Math.floor(Math.random() * results.length)];
+                        log.innerHTML += "<br>> Standby.";
+                        log.scrollTop = log.scrollHeight;
+                        
+                        btn.innerHTML = 'Iniciar Varredura';
+                        btn.style.opacity = '1';
+                        scanning = false;
+                    }, 1500);
                 }
-
-                addTerminalLine("Calculando resultados...", "animate-pulse text-yellow-500 my-4");
-                
-                // Simula tempo de processamento
-                await new Promise(r => setTimeout(r, 1500));
-
-                // Escolhe um resultado aleatório
-                const result = scanResults[Math.floor(Math.random() * scanResults.length)];
-                
-                // Remove o "Calculando resultados..."
-                terminalOutput.removeChild(terminalOutput.lastChild);
-                
-                addTerminalLine(result.text, result.color + " mt-4 border-l-2 pl-2 border-current bg-white/5 py-2");
-                addTerminalLine("Varredura concluída. Sistema em standby.", "text-gray-500 mt-4");
-
-                isScanning = false;
-                btnScan.disabled = false;
-                btnScan.classList.remove('opacity-50', 'cursor-not-allowed');
-                setiContainer.classList.remove('scanning');
-            });
-        });
+            }, 1000);
+        }
     </script>
 </body>
 </html>
