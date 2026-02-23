@@ -1,8 +1,4 @@
-# Fluxo de trabalho otimizado para publicar conteúdo estático no GitHub Pages.
-name: Deploy static content to Pages
-
-on:
-  # Executa em pushes direcionados ao branch principal (main)
+ # Executa em pushes direcionados ao branch principal (main)
   push:
     branches: ["main"]
   # Permite executar este fluxo de trabalho manualmente a partir do separador Actions
@@ -42,3 +38,4 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
